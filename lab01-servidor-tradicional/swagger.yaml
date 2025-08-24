@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: API de Tarefas
+  version: 1.0.0
+  description: Documentação completa da API de Tarefas e Usuários.
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /auth/register:
+    post:
+      summary: Registra um novo usuário
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        201:
+          description: Usuário criado com sucesso
+        409:
+          description: Email ou nome de usuário já existe
+  /auth/login:
+    post:
+      summary: Autentica um usuário
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        200:
+          description: Login bem-sucedido
+        401:
+          description: Credenciais inválidas
+
+components:
+  schemas:
+    User:
+      # ... schema do usuário
+    ErrorResponse:
+      # ... schema de erro

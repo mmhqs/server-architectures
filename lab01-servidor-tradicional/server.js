@@ -7,7 +7,8 @@ const config = require('./config/database');
 const database = require('./database/database');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
-const taskRoutes = require('./routes/users');
+const userRoutes = require('./routes/users');
+const swaggerUi = require('swagger-ui-express');
 
 /**
  * Servidor de Aplicação Tradicional
@@ -19,6 +20,13 @@ const taskRoutes = require('./routes/users');
  */
 
 const app = express();
+
+// Documentation
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const YAML = require('js-yaml'); // Instale: npm install js-yaml
+const swaggerDocument = YAML.load(fs.readFileSync('./swagger.yaml', 'utf8'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Middleware de segurança
 app.use(helmet());
