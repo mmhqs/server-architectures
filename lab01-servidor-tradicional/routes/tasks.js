@@ -6,11 +6,12 @@ const { authMiddleware } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const cache = require('../utils/cache');
 const logger = require('../utils/logger');
-
 const router = express.Router();
+const limiter = require('../middleware/rateLimiter');
 
-// Todas as rotas requerem autenticação
+// Aplica a autenticação e o rate limiting para todas as rotas de tasks
 router.use(authMiddleware);
+router.use(limiter);
 
 // Listar tarefas
 router.get('/', async (req, res) => {
@@ -60,6 +61,13 @@ router.get('/', async (req, res) => {
         // Passo 3: Depois de obter os dados do banco, armazena o resultado no cache.
         cache.set(req, tasks.map(task => task.toJSON()));
 
+        // Log estruturado de sucesso
+        logger.info('Tarefas listadas com sucesso', {
+            userId: req.user.id,
+            page: page,
+            limit: limit
+        });
+
         res.json({
             success: true,
             data: tasks.map(task => task.toJSON()),
@@ -69,6 +77,12 @@ router.get('/', async (req, res) => {
             }
         });
     } catch (error) {
+        // Log de erro estruturado
+        logger.error('Erro ao listar tarefas', {
+            userId: req.user.id,
+            error: error.message,
+            stack: error.stack
+        });
         res.status(500).json({ success: false, message: 'Erro interno do servidor' });
     }
 });
