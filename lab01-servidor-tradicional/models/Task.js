@@ -7,6 +7,10 @@ class Task {
         this.priority = data.priority || 'medium';
         this.userId = data.userId;
         this.createdAt = data.createdAt;
+        this.startDate = data.startDate || null;
+        this.endDate = data.endDate || null;
+        this.category = data.category || null;
+        this.tag = data.tag || null; 
     }
 
     validate() {

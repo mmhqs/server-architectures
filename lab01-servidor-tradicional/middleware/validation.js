@@ -17,7 +17,11 @@ const schemas = {
     task: Joi.object({
         title: Joi.string().min(1).max(200).required(),
         description: Joi.string().max(1000).allow(''),
-        priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium')
+        priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+        startDate: Joi.string().isoDate().optional(), // Valida string no formato YYYY-MM-DD
+        endDate: Joi.string().isoDate().optional(),   // Valida string no formato YYYY-MM-DD
+        category: Joi.string().optional(),
+        tag: Joi.string().optional(),
     })
 };
 

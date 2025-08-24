@@ -34,6 +34,10 @@ class Database {
                 priority TEXT DEFAULT 'medium',
                 userId TEXT NOT NULL,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                startDate TEXT,
+                endDate TEXT,
+                category TEXT,
+                tag TEXT,
                 FOREIGN KEY (userId) REFERENCES users (id)
             )`;
 

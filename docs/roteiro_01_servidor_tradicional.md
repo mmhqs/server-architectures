@@ -846,7 +846,7 @@ curl -X GET http://localhost:3000/api/tasks \
 2. **Cache em Memória**: Implementar cache simples para consultas frequentes ✅ **Adicionado cache na rota de buscar tarefas**
 3. **Logs Estruturados**: Adicionar sistema de logging mais robusto ✅ **Adicionado lib Winston para logs na rota de buscar tarefas**
 4. **Rate Limiting por Usuário**: Implementar limites específicos por usuário ✅ **Adicionado lib express-rate-limit para todas as rotas de tarefas**
-5. **Filtros Avançados**: Adicionar filtros por data, categoria, tags
+5. **Filtros Avançados**: Adicionar filtros por data, categoria, tags ✅ **Adicionados os atributos para filtragem em tasks**
 
 ## Entregáveis
 

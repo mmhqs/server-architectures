@@ -36,38 +36,62 @@ router.get('/', async (req, res) => {
         }
         
         // Se não houver cache, continua com a consulta ao DB
-        const { completed, priority } = req.query;
+        const { completed, priority, startDate, endDate, category, tag } = req.query;
 
-        // 1. Obter os parâmetros de paginação com valores padrão
+        // Parâmetros de paginação
         const page = parseInt(req.query.page) || 1; 
         const limit = parseInt(req.query.limit) || 10;
-
-        // 2. Calcular o offset
         const offset = (page - 1) * limit;
 
-        // Construir a consulta SQL
+        // Consulta SQL
         let sql = 'SELECT * FROM tasks WHERE userId = ?';
         const params = [req.user.id];
 
+        // Filtro por status de conclusão
         if (completed !== undefined) {
             sql += ' AND completed = ?';
             params.push(completed === 'true' ? 1 : 0);
         }
         
+        // Filtro por prioridade
         if (priority) {
             sql += ' AND priority = ?';
             params.push(priority);
         }
 
+        // Filtro por data de criação (ex: data inicial)
+        if (startDate) {
+            sql += ' AND createdAt >= ?';
+            params.push(startDate);
+        }
+
+        // Filtro por data de criação (ex: data final)
+        if (endDate) {
+            sql += ' AND createdAt <= ?';
+            params.push(endDate);
+        }
+        
+        // Filtro por categoria (se a coluna existir na sua tabela de tasks)
+        if (category) {
+            sql += ' AND category = ?';
+            params.push(category);
+        }
+
+        // Filtro por tag (se a coluna existir na sua tabela de tasks)
+        if (tag) {
+            sql += ' AND tag = ?';
+            params.push(tag);
+        }
+
         sql += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
 
-        // 3. Adicionar os parâmetros de limite e offset
+        // Parâmetros de limite e offset
         params.push(limit, offset);
 
         const rows = await database.all(sql, params);
         const tasks = rows.map(row => new Task({...row, completed: row.completed === 1}));
 
-        // Passo 3: Depois de obter os dados do banco, armazena o resultado no cache.
+        // Depois de obter os dados do banco, armazena o resultado no cache
         cache.set(req, tasks.map(task => task.toJSON()));
 
         // Log estruturado de sucesso

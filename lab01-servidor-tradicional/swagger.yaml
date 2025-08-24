@@ -43,10 +43,10 @@ paths:
   
   /tasks:
     get:
-      summary: Retrieves a list of user's tasks
+      summary: Retrieve a list of user's tasks
       tags:
         - Tasks
-      description: Returns a paginated list of tasks for the authenticated user, with optional filters for completion status and priority.
+      description: Returns a paginated list of tasks for the authenticated user, with optional filters.
       security:
         - bearerAuth: []
       parameters:
@@ -61,6 +61,28 @@ paths:
             type: string
             enum: ["low", "medium", "high"]
           description: Filters tasks by their priority.
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Filters tasks created on or after this date (YYYY-MM-DD).
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: Filters tasks created on or before this date (YYYY-MM-DD).
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filters tasks by category.
+        - in: query
+          name: tags
+          schema:
+            type: string
+          description: Comma-separated list of tags to filter tasks by.
         - in: query
           name: page
           schema:
@@ -99,16 +121,8 @@ paths:
                         example: 10
         401:
           description: Unauthorized access, authentication token is missing or invalid.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
     post:
       summary: Creates a new task
