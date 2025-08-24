@@ -13,7 +13,16 @@ const limiter = require('../middleware/rateLimiter');
 router.use(authMiddleware);
 router.use(limiter);
 
-// Listar tarefas
+/**
+ * Retrieves a paginated list of tasks for the authenticated user.
+ *
+ * This route allows filtering by task completion status and priority.
+ * It uses in-memory caching to optimize performance for frequent requests.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object containing a list of tasks and pagination metadata.
+ */
 router.get('/', async (req, res) => {
     try {
         // Tenta obter os dados do cache
@@ -87,7 +96,17 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Criar tarefa
+/**
+ * Creates a new task for the authenticated user.
+ *
+ * This route validates the request body, assigns a unique ID,
+ * and saves the new task to the database. It also invalidates the
+ * task list cache to ensure data freshness.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object with a success message and the created task's data.
+ */
 router.post('/', validate('task'), async (req, res) => {
     try {
         const taskData = { 
@@ -125,7 +144,18 @@ router.post('/', validate('task'), async (req, res) => {
     }
 });
 
-// Buscar tarefa por ID
+/**
+ * Retrieves a single task by its ID for the authenticated user.
+ *
+ * This route fetches a specific task from the database using its unique ID.
+ * It ensures the task belongs to the authenticated user.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} req.user - The authenticated user object from the middleware.
+ * @param {string} req.params.id - The unique ID of the task to retrieve.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object containing the task's data.
+ */
 router.get('/:id', async (req, res) => {
     try {
         const row = await database.get(
@@ -150,7 +180,19 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Atualizar tarefa
+/**
+ * Updates an existing task for the authenticated user by ID.
+ *
+ * This route allows updating the title, description, completion status, and priority of a task.
+ * It ensures the task belongs to the authenticated user and invalidates the cache after a successful update.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} req.user - The authenticated user object from the middleware.
+ * @param {string} req.params.id - The unique ID of the task to update.
+ * @param {object} req.body - The request body with the updated task data.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object with a success message and the updated task's data.
+ */
 router.put('/:id', async (req, res) => {
     try {
         const { title, description, completed, priority } = req.body;
@@ -187,7 +229,18 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Deletar tarefa
+/**
+ * Deletes a task by its ID for the authenticated user.
+ *
+ * This route permanently removes a task from the database. It ensures
+ * the task belongs to the authenticated user and invalidates the task list cache.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} req.user - The authenticated user object from the middleware.
+ * @param {string} req.params.id - The unique ID of the task to delete.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object with a success message.
+ */
 router.delete('/:id', async (req, res) => {
     try {
         const result = await database.run(

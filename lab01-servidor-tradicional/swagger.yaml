@@ -23,6 +23,7 @@ paths:
           description: Usuário criado com sucesso
         409:
           description: Email ou nome de usuário já existe
+
   /auth/login:
     post:
       summary: Autentica um usuário
@@ -39,10 +40,398 @@ paths:
           description: Login bem-sucedido
         401:
           description: Credenciais inválidas
+  
+  /tasks:
+    get:
+      summary: Retrieve a list of user's tasks
+      tags:
+        - Tasks
+      description: Returns a paginated list of tasks for the authenticated user, with optional filters for completion status and priority.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: completed
+          schema:
+            type: boolean
+          description: Filters tasks by their completion status.
+        - in: query
+          name: priority
+          schema:
+            type: string
+            enum: ["low", "medium", "high"]
+          description: Filters tasks by their priority.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: The page number for pagination.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: The number of tasks to return per page.
+      responses:
+        200:
+          description: A successful response with the list of tasks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create a new task
+      tags:
+        - Tasks
+      description: Creates a new task and associates it with the authenticated user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: The title of the task.
+                  example: "Finish API documentation"
+                description:
+                  type: string
+                  description: A detailed description of the task.
+                  example: "Write JSDoc and Swagger schemas for all task routes."
+                priority:
+                  type: string
+                  description: The priority of the task.
+                  enum: ["low", "medium", "high"]
+                  example: "high"
+      responses:
+        201:
+          description: Task created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tarefa criada com sucesso"
+                  data:
+                    $ref: '#/components/schemas/Task'
+        400:
+          description: Invalid request data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Dados inválidos"
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                      example: "Título é obrigatório"
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+  /tasks/{id}:
+    get:
+      summary: Get a task by ID
+      tags:
+        - Tasks
+      description: Retrieves a single task by its ID, accessible only by the task's owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the task.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        200:
+          description: A single task object.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Task'
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    put:
+      summary: Update a task
+      tags:
+        - Tasks
+      description: Updates an existing task's details by its ID, accessible only by the task's owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the task to update.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: The new title for the task.
+                  example: "Finish API documentation"
+                description:
+                  type: string
+                  description: A detailed description of the task.
+                  example: "Update all routes with JSDoc and Swagger schemas."
+                completed:
+                  type: boolean
+                  description: The completion status of the task.
+                  example: true
+                priority:
+                  type: string
+                  description: The priority of the task.
+                  enum: ["low", "medium", "high"]
+                  example: "high"
+      responses:
+        200:
+          description: Task updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tarefa atualizada com sucesso"
+                  data:
+                    $ref: '#/components/schemas/Task'
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Task not found or does not belong to the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a task
+      tags:
+        - Tasks
+      description: Deletes a task by its ID, accessible only by the task's owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the task to delete.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        200:
+          description: Task deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tarefa deletada com sucesso"
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Task not found or does not belong to the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   schemas:
     User:
-      # ... schema do usuário
-    ErrorResponse:
-      # ... schema de erro
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the user.
+          example: "09876543-2109-8765-4321-098765432109"
+        email:
+          type: string
+          format: email
+          description: The user's email address.
+          example: "joao@example.com"
+        username:
+          type: string
+          description: The user's unique username.
+          example: "joaosilva"
+        firstName:
+          type: string
+          description: The user's first name.
+          example: "João"
+        lastName:
+          type: string
+          description: The user's last name.
+          example: "Silva"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the user was created.
+          example: "2025-08-25T14:30:00Z"
+      required:
+        - id
+        - email
+        - username
+        - firstName
+        - lastName
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: O ID único da tarefa.
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        title:
+          type: string
+          description: O título da tarefa.
+          example: "Comprar pão"
+        description:
+          type: string
+          description: A descrição detalhada da tarefa.
+          default: ""
+          example: "Pão integral e francês."
+        completed:
+          type: boolean
+          description: O status de conclusão da tarefa.
+          default: false
+          example: false
+        priority:
+          type: string
+          description: A prioridade da tarefa.
+          default: "medium"
+          enum:
+            - "low"
+            - "medium"
+            - "high"
+          example: "medium"
+        userId:
+          type: string
+          description: O ID do usuário associado à tarefa.
+          example: "09876543-2109-8765-4321-098765432109"
+        createdAt:
+          type: string
+          format: date-time
+          description: A data e hora de criação da tarefa.
+          example: "2025-08-25T10:00:00Z"
+      required:
+        - title
+        - userId

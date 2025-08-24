@@ -6,7 +6,16 @@ const { validate } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Registrar usuário
+/**
+ * Handles user registration.
+ *
+ * This route validates user input, checks for existing users,
+ * hashes the password, and creates a new user in the database.
+ * It returns a JWT for authentication.
+ *
+ * @param {object} req - The Express request object.
+ * @returns {object} The response object with user data and a token.
+ */
 router.post('/register', validate('register'), async (req, res) => {
     try {
         const { email, username, password, firstName, lastName } = req.body;
@@ -24,7 +33,6 @@ router.post('/register', validate('register'), async (req, res) => {
             });
         }
 
-        // Criar usuário
         const userData = { id: uuidv4(), email, username, password, firstName, lastName };
         const user = new User(userData);
         await user.hashPassword();
@@ -46,7 +54,15 @@ router.post('/register', validate('register'), async (req, res) => {
     }
 });
 
-// Login
+/**
+ * Handles user login.
+ *
+ * This route authenticates a user by checking their credentials
+ * against the database. It returns a JWT for subsequent API requests.
+ *
+ * @param {object} req - The Express request object.
+ * @returns {object} The response object with user data and a token.
+ */
 router.post('/login', validate('login'), async (req, res) => {
     try {
         const { identifier, password } = req.body;

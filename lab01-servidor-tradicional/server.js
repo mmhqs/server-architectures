@@ -22,7 +22,6 @@ const swaggerUi = require('swagger-ui-express');
 const app = express();
 
 // Documentation
-const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
 const YAML = require('js-yaml'); // Instale: npm install js-yaml
 const swaggerDocument = YAML.load(fs.readFileSync('./swagger.yaml', 'utf8'));
