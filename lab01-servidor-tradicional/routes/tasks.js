@@ -5,6 +5,7 @@ const database = require('../database/database');
 const { authMiddleware } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const cache = require('../utils/cache');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
