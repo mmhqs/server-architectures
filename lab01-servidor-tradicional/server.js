@@ -3,11 +3,11 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-
 const config = require('./config/database');
 const database = require('./database/database');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
+const taskRoutes = require('./routes/users');
 
 /**
  * Servidor de Aplicação Tradicional
@@ -60,6 +60,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
