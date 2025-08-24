@@ -854,8 +854,8 @@ curl -X GET http://localhost:3000/api/tasks \
 - [✅] API REST com todas as operações CRUD
 - [✅] Sistema de autenticação JWT
 - [✅] Documentação da API (endpoints e payloads)
-- [ ] Análise de performance básica
-- [ ] Identificação de limitações arquiteturais
+- [✅] Análise de performance básica
+- [✅] Identificação de limitações arquiteturais
 
 ## Comandos de Execução
 

@@ -150,10 +150,21 @@ router.post('/', validate('task'), async (req, res) => {
             });
         }
 
-        await database.run(
-            'INSERT INTO tasks (id, title, description, priority, userId) VALUES (?, ?, ?, ?, ?)',
-            [task.id, task.title, task.description, task.priority, task.userId]
-        );
+        const sql = `INSERT INTO tasks (id, title, description, priority, startDate, endDate, category, tag, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const params = [
+            task.id, 
+            task.title, 
+            task.description, 
+            task.priority, 
+            task.startDate, 
+            task.endDate, 
+            task.category, 
+            task.tag, 
+            task.userId
+        ];
+
+        await database.run(sql, params);
 
         // Invalida o cache da listagem de tarefas após a criação
         cache.invalidateAll();
