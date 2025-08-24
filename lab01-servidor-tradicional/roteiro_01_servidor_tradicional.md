@@ -842,8 +842,8 @@ curl -X GET http://localhost:3000/api/tasks \
 
 ## Exercícios Complementares
 
-1. **Implementar Paginação**: Adicionar suporte a paginação na listagem de tarefas
-2. **Cache em Memória**: Implementar cache simples para consultas frequentes
+1. **Implementar Paginação**: Adicionar suporte a paginação na listagem de tarefas ✅
+2. **Cache em Memória**: Implementar cache simples para consultas frequentes ✅
 3. **Logs Estruturados**: Adicionar sistema de logging mais robusto
 4. **Rate Limiting por Usuário**: Implementar limites específicos por usuário
 5. **Filtros Avançados**: Adicionar filtros por data, categoria, tags

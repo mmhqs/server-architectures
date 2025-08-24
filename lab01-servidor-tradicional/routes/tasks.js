@@ -4,6 +4,7 @@ const Task = require('../models/Task');
 const database = require('../database/database');
 const { authMiddleware } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const cache = require('../utils/cache');
 
 const router = express.Router();
 
@@ -13,7 +14,27 @@ router.use(authMiddleware);
 // Listar tarefas
 router.get('/', async (req, res) => {
     try {
+        // Tenta obter os dados do cache
+        const cachedTasks = cache.get(req);
+        if (cachedTasks) {
+            return res.json({
+                success: true,
+                data: cachedTasks,
+                fromCache: true // Sinaliza que a resposta veio do cache
+            });
+        }
+        
+        // Se não houver cache, continua com a consulta ao DB
         const { completed, priority } = req.query;
+
+        // 1. Obter os parâmetros de paginação com valores padrão
+        const page = parseInt(req.query.page) || 1; 
+        const limit = parseInt(req.query.limit) || 10;
+
+        // 2. Calcular o offset
+        const offset = (page - 1) * limit;
+
+        // Construir a consulta SQL
         let sql = 'SELECT * FROM tasks WHERE userId = ?';
         const params = [req.user.id];
 
@@ -27,14 +48,24 @@ router.get('/', async (req, res) => {
             params.push(priority);
         }
 
-        sql += ' ORDER BY createdAt DESC';
+        sql += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+
+        // 3. Adicionar os parâmetros de limite e offset
+        params.push(limit, offset);
 
         const rows = await database.all(sql, params);
         const tasks = rows.map(row => new Task({...row, completed: row.completed === 1}));
 
+        // Passo 3: Depois de obter os dados do banco, armazena o resultado no cache.
+        cache.set(req, tasks.map(task => task.toJSON()));
+
         res.json({
             success: true,
-            data: tasks.map(task => task.toJSON())
+            data: tasks.map(task => task.toJSON()),
+            pagination: {
+                page,
+                limit
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Erro interno do servidor' });
@@ -65,6 +96,9 @@ router.post('/', validate('task'), async (req, res) => {
             'INSERT INTO tasks (id, title, description, priority, userId) VALUES (?, ?, ?, ?, ?)',
             [task.id, task.title, task.description, task.priority, task.userId]
         );
+
+        // Invalida o cache da listagem de tarefas após a criação
+        cache.invalidateAll();
 
         res.status(201).json({
             success: true,
@@ -124,6 +158,9 @@ router.put('/:id', async (req, res) => {
         );
 
         const task = new Task({...updatedRow, completed: updatedRow.completed === 1});
+
+        // Invalida o cache da listagem de tarefas após a criação
+        cache.invalidateAll();
         
         res.json({
             success: true,
@@ -149,6 +186,9 @@ router.delete('/:id', async (req, res) => {
                 message: 'Tarefa não encontrada'
             });
         }
+
+        // Invalida o cache da listagem de tarefas após a criação
+        cache.invalidateAll();
 
         res.json({
             success: true,
