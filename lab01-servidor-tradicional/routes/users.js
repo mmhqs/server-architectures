@@ -9,6 +9,17 @@ const router = express.Router();
 // Todas as rotas abaixo requerem autenticação
 router.use(authMiddleware);
 
+/**
+ * Retrieves the profile information for the authenticated user.
+ *
+ * This route fetches the user's details from the database based on their authentication token.
+ * It provides a way for a user to view their own data.
+ *
+ * @param {object} req - O objeto de requisição do Express.
+ * @param {object} req.user - O objeto do usuário autenticado fornecido pelo middleware.
+ * @param {object} res - O objeto de resposta do Express.
+ * @returns {object} O objeto de resposta com os dados do usuário.
+ */
 router.get('/me', async (req, res) => {
     try {
         const userData = await database.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
@@ -25,6 +36,19 @@ router.get('/me', async (req, res) => {
     }
 });
 
+
+/**
+ * Updates the authenticated user's profile.
+ *
+ * This route allows a user to update their own email, username, first name, and last name.
+ * It uses the authenticated user's ID to ensure they are modifying their own data.
+ *
+ * @param {object} req - O objeto de requisição do Express.
+ * @param {object} req.user - O objeto do usuário autenticado fornecido pelo middleware.
+ * @param {object} req.body - O objeto do corpo da requisição com os dados do usuário a serem atualizados.
+ * @param {object} res - O objeto de resposta do Express.
+ * @returns {object} O objeto de resposta com uma mensagem de sucesso e os dados atualizados do usuário.
+ */
 router.put('/me', validate('userUpdate'), async (req, res) => {
     try {
         const { email, username, firstName, lastName } = req.body;
@@ -51,6 +75,17 @@ router.put('/me', validate('userUpdate'), async (req, res) => {
     }
 });
 
+/**
+ * Deletes the authenticated user's account and all associated tasks.
+ *
+ * This route performs a cascade delete, first removing all tasks belonging to the user
+ * to maintain database integrity, and then deleting the user's record.
+ *
+ * @param {object} req - O objeto de requisição do Express.
+ * @param {object} req.user - O objeto do usuário autenticado fornecido pelo middleware.
+ * @param {object} res - O objeto de resposta do Express.
+ * @returns {object} O objeto de resposta com uma mensagem de sucesso.
+ */
 router.delete('/me', async (req, res) => {
     try {
         // Deletar as tarefas associadas ao usuário primeiro

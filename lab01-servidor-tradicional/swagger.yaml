@@ -9,26 +9,26 @@ servers:
 paths:
   /auth/register:
     post:
-      summary: Registra um novo usuário
+      summary: Registers a new user
       tags:
-        - Autenticação
+        - Authentication
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRegistration'
+              $ref: '#/components/schemas/User'
       responses:
         201:
-          description: Usuário criado com sucesso
+          description: User created successfully
         409:
-          description: Email ou nome de usuário já existe
+          description: Email or username already exists
 
   /auth/login:
     post:
-      summary: Autentica um usuário
+      summary: Authenticates a user
       tags:
-        - Autenticação
+        - Authentication
       requestBody:
         required: true
         content:
@@ -37,13 +37,13 @@ paths:
               $ref: '#/components/schemas/UserLogin'
       responses:
         200:
-          description: Login bem-sucedido
+          description: Login successful
         401:
-          description: Credenciais inválidas
+          description: Invalid credentials
   
   /tasks:
     get:
-      summary: Retrieve a list of user's tasks
+      summary: Retrieves a list of user's tasks
       tags:
         - Tasks
       description: Returns a paginated list of tasks for the authenticated user, with optional filters for completion status and priority.
@@ -111,7 +111,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
     post:
-      summary: Create a new task
+      summary: Creates a new task
       tags:
         - Tasks
       description: Creates a new task and associates it with the authenticated user.
@@ -188,7 +188,7 @@ paths:
   
   /tasks/{id}:
     get:
-      summary: Get a task by ID
+      summary: Gets a task by ID
       tags:
         - Tasks
       description: Retrieves a single task by its ID, accessible only by the task's owner.
@@ -235,7 +235,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     
     put:
-      summary: Update a task
+      summary: Updates a task
       tags:
         - Tasks
       description: Updates an existing task's details by its ID, accessible only by the task's owner.
@@ -309,7 +309,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
     delete:
-      summary: Delete a task
+      summary: Deletes a task
       tags:
         - Tasks
       description: Deletes a task by its ID, accessible only by the task's owner.
@@ -355,6 +355,204 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  
+  /tasks/stats/summary:
+    get:
+      summary: Gets task summary statistics
+      tags:
+        - Statistics
+      description: Retrieves a summary of all tasks for the authenticated user, including total, completed, pending counts, and a completion rate.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Task statistics retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: The total number of tasks.
+                        example: 10
+                      completed:
+                        type: integer
+                        description: The number of completed tasks.
+                        example: 7
+                      pending:
+                        type: integer
+                        description: The number of pending tasks.
+                        example: 3
+                      completionRate:
+                        type: number
+                        format: float
+                        description: The percentage of completed tasks.
+                        example: 70.00
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/me:
+    get:
+      summary: Gets authenticated user's profile
+      tags:
+        - Users
+      description: Retrieves the profile details of the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Updates the authenticated user's profile
+      tags:
+        - Users
+      description: Allows a user to update their own profile information.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The new email address for the user.
+                  example: "novo.joao@example.com"
+                username:
+                  type: string
+                  description: The new username for the user.
+                  example: "joao.updates"
+                firstName:
+                  type: string
+                  description: The new first name for the user.
+                  example: "João Carlos"
+                lastName:
+                  type: string
+                  description: The new last name for the user.
+                  example: "Santos"
+      responses:
+        200:
+          description: User profile updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Usuário atualizado com sucesso"
+                  data:
+                    $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Deletes the authenticated user's account
+      tags:
+        - Users
+      description: Deletes the currently authenticated user's account and all of their associated tasks. This action is irreversible.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User and all associated tasks deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Usuário e suas tarefas deletados com sucesso"
+        401:
+          description: Unauthorized access, authentication token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'  
 
 components:
   schemas:

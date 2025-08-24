@@ -267,7 +267,17 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Estatísticas
+/**
+ * Retrieves summary statistics for the authenticated user's tasks.
+ *
+ * This route calculates and returns the total number of tasks, the count of
+ * completed and pending tasks, and the overall completion rate.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} req.user - The authenticated user object from the middleware.
+ * @param {object} res - The Express response object.
+ * @returns {object} The response object containing the task statistics.
+ */
 router.get('/stats/summary', async (req, res) => {
     try {
         const stats = await database.get(`
