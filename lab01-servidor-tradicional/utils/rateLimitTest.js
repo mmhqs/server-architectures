@@ -1,11 +1,11 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check } from 'k6';
 import { Counter } from 'k6/metrics';
 
 // --- CONFIGURAÇÃO DO TESTE ---
 const BASE_URL = 'http://localhost:3000'; // A URL base da sua API
-const LOGIN_ENDPOINT = '/auth/login'; // O endpoint de login
-const PROTECTED_ENDPOINT = '/tasks';  // Um endpoint protegido pelo rate limit
+const LOGIN_ENDPOINT = '/api/auth/login'; // O endpoint de login
+const PROTECTED_ENDPOINT = '/api/tasks';  // Um endpoint protegido pelo rate limit
 const USER_EMAIL = 'user@test.com'; // Email de um usuário de teste
 const USER_PASSWORD = '123456'; // Senha do usuário de teste
 
@@ -34,7 +34,7 @@ export const options = {
 export function setup() {
   console.log('Autenticando para obter o token JWT...');
   const loginPayload = JSON.stringify({
-    email: USER_EMAIL,
+    identifier: USER_EMAIL,
     password: USER_PASSWORD,
   });
 
@@ -44,10 +44,9 @@ export function setup() {
 
   const res = http.post(`${BASE_URL}${LOGIN_ENDPOINT}`, loginPayload, params);
   
-  // Verificamos se o login foi bem-sucedido
   check(res, { 'login successful': (r) => r.status === 200 });
 
-  const authToken = res.json('token'); // Ajuste 'token' para o nome do campo do token na sua resposta de login
+  const authToken = res.json('data.token');
   if (!authToken) {
       throw new Error('Não foi possível obter o token de autenticação. Verifique suas credenciais e a resposta do login.');
   }
@@ -59,9 +58,11 @@ export function setup() {
 export default function (data) {
   const params = {
     headers: {
-      'Authorization': `Bearer ${data.token}`, // Usa o token obtido no setup
+      'Authorization': `Bearer ${data.token}`,
       'Content-Type': 'application/json',
     },
+    // Diz ao k6 que tanto 200 quanto 429 são respostas válidas para este teste
+    expectedStatuses: [200, 429],
   };
 
   // Dispara a requisição para a rota protegida
@@ -74,7 +75,7 @@ export default function (data) {
 
   // Se a requisição foi bloqueada, incrementamos nosso contador
   if (isBlocked) {
-    blockedRequests.inc(1);
+    blockedRequests.add(1);
   }
 
   // Verificamos também se a requisição foi bem-sucedida (status 2xx)
