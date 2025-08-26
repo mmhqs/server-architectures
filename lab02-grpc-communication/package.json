@@ -1,14 +1,18 @@
 {
   "name": "lab02-grpc-communication",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "node src/server/server.js",
+    "server:dev": "nodemon src/server/server.js",
+    "client": "node src/client/client.js",
+    "demo": "npm run client",
+    "proto:generate": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./generated --grpc_out=grpc_js:./generated --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` -I ./proto proto/*.proto"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["grpc", "protobuf", "sistemas-distribuidos", "rpc"],
+  "author": "Aluno PUC Minas",
+  "license": "MIT",
+  "description": "Sistema de tarefas usando gRPC e Protocol Buffers",
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
