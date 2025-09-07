@@ -9,8 +9,9 @@ const ProtoLoader = require('./utils/protoLoader');
  */
 
 class GrpcClient {
-    constructor(serverAddress = 'localhost:50051') {
-        this.serverAddress = serverAddress;
+    constructor(serverAddresses = ['localhost:50051', 'localhost:50052', 'localhost:50053']) {
+        const addressList = serverAddresses.join(',');
+        this.serverAddress = `dns:///${addressList}`;
         this.protoLoader = new ProtoLoader();
         this.authClient = null;
         this.taskClient = null;
