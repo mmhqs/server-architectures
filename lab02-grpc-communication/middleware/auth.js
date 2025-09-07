@@ -36,8 +36,23 @@ class AuthInterceptor {
         return (options, nextCall) => {
             return new grpc.InterceptingCall(nextCall(options), {
                 start: function(metadata, listener, next) {
-                    // Interceptar metadados se necessário
-                    next(metadata, listener);
+                                        const token = metadata.get('authorization')[0]; // Pegar o token do metadata
+
+                    if (!token) {
+                        const error = new Error('Token de autenticação obrigatório');
+                        error.code = grpc.status.UNAUTHENTICATED;
+                        return next(error);
+                    }
+
+                    try {
+                        const decoded = jwt.verify(token.replace('Bearer ', ''), 'seu-secret-aqui');
+                        metadata.set('user', JSON.stringify(decoded));
+                        next(metadata, listener);
+                    } catch (error) {
+                        const grpcError = new Error('Token inválido');
+                        grpcError.code = grpc.status.UNAUTHENTICATED;
+                        return next(grpcError);
+                    }
                 }
             });
         };

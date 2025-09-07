@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const Task = require('../models/Task');
 const database = require('../database/database');
 const ProtoLoader = require('../utils/protoLoader');
+const { status } = require('@grpc/grpc-js');
 
 class TaskService {
     constructor() {
@@ -28,15 +29,14 @@ class TaskService {
     async createTask(call, callback) {
         try {
             const { token, title, description, priority } = call.request;
-            
+
             // Validar token
             const user = await this.validateToken(token);
-            
+
             if (!title?.trim()) {
-                return callback(null, {
-                    success: false,
-                    message: 'Título é obrigatório',
-                    errors: ['Título não pode estar vazio']
+                return callback({
+                    code: status.INVALID_ARGUMENT,
+                    details: 'O título é obrigatório.',
                 });
             }
 
@@ -53,10 +53,9 @@ class TaskService {
             const validation = task.validate();
 
             if (!validation.isValid) {
-                return callback(null, {
-                    success: false,
-                    message: 'Dados inválidos',
-                    errors: validation.errors
+                return callback({
+                    code: status.INVALID_ARGUMENT,
+                    details: `Dados inválidos: ${validation.errors.join(', ')}`,
                 });
             }
 
@@ -75,11 +74,14 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao criar tarefa:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
     }
+
 
     /**
      * Listar tarefas com paginação
@@ -110,7 +112,7 @@ class TaskService {
 
             const result = await database.getAllWithPagination(sql, params, pageNum, limitNum);
             const tasks = result.rows.map(row => {
-                const task = new Task({...row, completed: row.completed === 1});
+                const task = new Task({ ...row, completed: row.completed === 1 });
                 return task.toProtobuf();
             });
 
@@ -123,11 +125,14 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao buscar tarefas:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
-    }
+
+    };
 
     /**
      * Buscar tarefa específica
@@ -149,8 +154,8 @@ class TaskService {
                 });
             }
 
-            const task = new Task({...row, completed: row.completed === 1});
-            
+            const task = new Task({ ...row, completed: row.completed === 1 });
+
             callback(null, {
                 success: true,
                 message: 'Tarefa encontrada',
@@ -158,9 +163,11 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao buscar tarefa:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
     }
 
@@ -211,8 +218,8 @@ class TaskService {
                 [task_id, user.id]
             );
 
-            const task = new Task({...updatedRow, completed: updatedRow.completed === 1});
-            
+            const task = new Task({ ...updatedRow, completed: updatedRow.completed === 1 });
+
             // Notificar streams ativos
             this.notifyStreams('TASK_UPDATED', task);
 
@@ -223,9 +230,11 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao atualizar tarefa:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
     }
 
@@ -262,8 +271,8 @@ class TaskService {
                 });
             }
 
-            const task = new Task({...existingTask, completed: existingTask.completed === 1});
-            
+            const task = new Task({ ...existingTask, completed: existingTask.completed === 1 });
+
             // Notificar streams ativos
             this.notifyStreams('TASK_DELETED', task);
 
@@ -273,9 +282,11 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao deletar tarefa:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
     }
 
@@ -308,9 +319,11 @@ class TaskService {
             });
         } catch (error) {
             console.error('Erro ao buscar estatísticas:', error);
-            const grpcError = new Error(error.message || 'Erro interno do servidor');
-            grpcError.code = error.message === 'Token inválido' ? grpc.status.UNAUTHENTICATED : grpc.status.INTERNAL;
-            callback(grpcError);
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            callback({
+                code: errorCode,
+                details: error.message || 'Erro interno do servidor',
+            });
         }
     }
 
@@ -339,9 +352,9 @@ class TaskService {
 
             // Enviar tarefas existentes
             for (const row of rows) {
-                const task = new Task({...row, completed: row.completed === 1});
+                const task = new Task({ ...row, completed: row.completed === 1 });
                 call.write(task.toProtobuf());
-                
+
                 // Simular delay para demonstrar streaming
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
@@ -361,7 +374,11 @@ class TaskService {
 
         } catch (error) {
             console.error('Erro no stream de tarefas:', error);
-            call.destroy(new Error(error.message || 'Erro no streaming'));
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            call.destroy({
+                code: errorCode,
+                details: error.message || 'Erro no streaming',
+            });
         }
     }
 
@@ -376,7 +393,7 @@ class TaskService {
             const user = await this.validateToken(token);
 
             const sessionId = uuidv4();
-            
+
             this.streamingSessions.set(sessionId, {
                 call,
                 userId: user.id,
@@ -403,7 +420,11 @@ class TaskService {
 
         } catch (error) {
             console.error('Erro ao iniciar stream de notificações:', error);
-            call.destroy(new Error(error.message || 'Erro no streaming'));
+            const errorCode = error.message === 'Token inválido' ? status.UNAUTHENTICATED : status.INTERNAL;
+            call.destroy({
+                code: errorCode,
+                details: error.message || 'Erro no streaming',
+            });
         }
     }
 
