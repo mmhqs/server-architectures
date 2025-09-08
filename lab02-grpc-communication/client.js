@@ -9,9 +9,10 @@ const ProtoLoader = require('./utils/protoLoader');
  */
 
 class GrpcClient {
-    constructor(/* serverAddresses = ['localhost:50051', 'localhost:50052', 'localhost:50053'] */) {
+    constructor() {
+        // Balanceamento de carga
         /* this.serverAddress = `dns:///localhost:50051,localhost:50052,localhost:50053`; */
-        this.serverAddress = `dns:///localhost:50051`;
+        this.serverAddress = '127.0.0.1:50051';
         this.protoLoader = new ProtoLoader();
         this.authClient = null;
         this.taskClient = null;
@@ -205,7 +206,12 @@ class GrpcClient {
         // Envia a primeira mensagem para autenticar e entrar no chat
         call.write({
             token: this.currentToken,
-            type: 1 // USER_JOINED
+            type: 'USER_JOINED'
+        });
+
+        call.write({
+            type: 'CHAT_MESSAGE',
+            message: { content: 'Oláaaa!' }
         });
 
         return call;
@@ -276,6 +282,7 @@ async function demonstrateGrpcClient() {
         // 7. Iniciando o chat em tempo real
         console.log('\n💬 Conectando ao chat. Digite suas mensagens e pressione Enter.');
         const chatStream = client.startChatStream();
+        console.log('Chamou startChatStream() uma vez.');
 
         // Envia uma mensagem de teste para o chat após 3 segundos
         setTimeout(() => {
@@ -283,7 +290,7 @@ async function demonstrateGrpcClient() {
             if (chatStream) {
                 chatStream.write({
                     token: client.currentToken,
-                    type: 0, // CHAT_MESSAGE
+                    type: 'CHAT_MESSAGE',
                     message: {
                         content: 'Olá! Sou um teste automatizado.'
                     }
@@ -297,7 +304,7 @@ async function demonstrateGrpcClient() {
             if (message && chatStream) {
                 chatStream.write({
                     token: client.currentToken,
-                    type: 0, // CHAT_MESSAGE
+                    type: 'CHAT_MESSAGE',
                     message: {
                         content: message
                     }

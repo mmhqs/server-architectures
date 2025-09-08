@@ -19,23 +19,23 @@ class ChatService {
      */
     async streamChat(call) {
         let user;
-        let isAuthenticated = false;
 
         // Ouve dados do cliente (mensagens enviadas)
         call.on('data', async (request) => {
             try {
-                if (!isAuthenticated) {
-                    // Valida o token na primeira mensagem
+                if (!user) {
+                    // primeira mensagem deve ter token
+                    if (!request.token) {
+                        call.end();
+                        return;
+                    }
                     user = await this.validateToken(request.token);
-                    isAuthenticated = true;
-
-                    // Adiciona o stream à lista de streams ativos
                     activeStreams.set(call, user);
                     console.log(`💬 Usuário ${user.username} entrou no chat.`);
-                    
+
                     // Envia uma notificação para todos os outros usuários
                     this.broadcast({
-                        type: 1, // USER_JOINED
+                        type: 'USER_JOINED',
                         message: {
                             userId: user.id,
                             username: user.username,
@@ -46,17 +46,26 @@ class ChatService {
                     return;
                 }
 
-                if (request.type === 0) { // CHAT_MESSAGE
+                // Se não houver token, é uma mensagem de chat
+                if (!user) {
+                    call.end(); // Se não há usuário autenticado, encerra a conexão.
+                    return;
+                }
+
+                if (request.type === 0 || request.type === 'CHAT_MESSAGE') {
                     const chatMessage = {
                         userId: user.id,
                         username: user.username,
-                        content: request.message.content,
+                        content: request.message?.content ?? 'DEU RUIM FIA',
                         timestamp: Math.floor(Date.now() / 1000)
                     };
-                    
+
+                    // Adicione esta linha para ver a mensagem no console do servidor
+                    console.log(`[${chatMessage.username}]: ${chatMessage.content}`);
+
                     // Retransmite a mensagem para todos os clientes
                     this.broadcast({
-                        type: 0, // CHAT_MESSAGE
+                        type: 'CHAT_MESSAGE',
                         message: chatMessage
                     });
                 }
@@ -72,7 +81,7 @@ class ChatService {
             if (user) {
                 console.log(`💬 Usuário ${user.username} saiu do chat.`);
                 this.broadcast({
-                    type: 2, // USER_LEFT
+                    type: 'USER_LEFT',
                     message: {
                         userId: user.id,
                         username: user.username,
@@ -99,5 +108,29 @@ class ChatService {
         }
     }
 }
+
+/* // === Prompt para enviar mensagens pelo console do servidor ===
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+rl.on('line', (input) => {
+    const message = input.trim();
+    if (message.length > 0) {
+        for (const [stream] of activeStreams.entries()) {
+            stream.write({
+                type: 'CHAT_MESSAGE',
+                message: {
+                    userId: 'server',
+                    username: 'Servidor',
+                    content: message,
+                    timestamp: Math.floor(Date.now() / 1000)
+                }
+            });
+        }
+        console.log(`🖥️ [Servidor]: ${message}`);
+    }
+}); */
 
 module.exports = ChatService;
