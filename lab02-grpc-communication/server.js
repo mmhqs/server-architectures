@@ -2,6 +2,7 @@ const grpc = require('@grpc/grpc-js');
 const ProtoLoader = require('./utils/protoLoader');
 const AuthService = require('./services/AuthService');
 const TaskService = require('./services/TaskService');
+const ChatService = require('./services/ChatService');
 const database = require('./database/database');
 
 /**
@@ -22,6 +23,7 @@ class GrpcServer {
         this.protoLoader = new ProtoLoader();
         this.authService = new AuthService();
         this.taskService = new TaskService();
+        this.chatService = new ChatService();
     }
 
     async initialize() {
@@ -32,15 +34,16 @@ class GrpcServer {
             // Carregar definições dos protobuf
             const authProto = this.protoLoader.loadProto('auth_service.proto', 'auth');
             const taskProto = this.protoLoader.loadProto('task_service.proto', 'tasks');
+            const chatProto = this.protoLoader.loadProto('chat_service.proto', 'chat');
 
-            // Registrar serviços de autenticação
+            // Auth services
             this.server.addService(authProto.AuthService.service, {
                 Register: this.authService.register.bind(this.authService),
                 Login: this.authService.login.bind(this.authService),
                 ValidateToken: this.authService.validateToken.bind(this.authService)
             });
 
-            // Registrar serviços de tarefas
+            // Task services
             this.server.addService(taskProto.TaskService.service, {
                 CreateTask: this.taskService.createTask.bind(this.taskService),
                 GetTasks: this.taskService.getTasks.bind(this.taskService),
@@ -51,6 +54,11 @@ class GrpcServer {
                 StreamTasks: this.taskService.streamTasks.bind(this.taskService),
                 StreamNotifications: this.taskService.streamNotifications.bind(this.taskService)
             });
+
+            // Chat services
+            this.server.addService(chatProto.ChatService.service, {
+                StreamChat: this.chatService.streamChat.bind(this.chatService)
+            })
 
             console.log('✅ Serviços gRPC registrados com sucesso');
         } catch (error) {
@@ -79,6 +87,7 @@ class GrpcServer {
                 console.log('🚀 Serviços disponíveis:');
                 console.log('🚀   - AuthService (Register, Login, ValidateToken)');
                 console.log('🚀   - TaskService (CRUD + Streaming)');
+                console.log('🚀   - ChatService (StreamChat)');
                 console.log('🚀 =================================');
             });
 

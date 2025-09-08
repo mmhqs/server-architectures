@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package chat;
+
+// Enum para o tipo de mensagem
+enum MessageType {
+  CHAT_MESSAGE = 0;
+  USER_JOINED = 1;
+  USER_LEFT = 2;
+}
+
+// Mensagem que representa uma mensagem de chat
+message ChatMessage {
+  string userId = 1;
+  string username = 2;
+  string content = 3;
+  int64 timestamp = 4;
+}
+
+// Mensagem de requisição e resposta do stream
+message ChatRequest {
+  string token = 1; // Para autenticar o usuário
+  ChatMessage message = 2; // Mensagem de chat
+  MessageType type = 3; // Tipo de mensagem (e.g., CHAT_MESSAGE, USER_JOINED)
+}
+
+message ChatResponse {
+  ChatMessage message = 1;
+  MessageType type = 2;
+}
+
+// Serviço de chat com um método de streaming bidirecional
+service ChatService {
+  // O 'stream' em ambos os lados indica streaming bidirecional
+  rpc StreamChat(stream ChatRequest) returns (stream ChatResponse);
+}

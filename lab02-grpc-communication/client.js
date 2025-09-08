@@ -9,12 +9,13 @@ const ProtoLoader = require('./utils/protoLoader');
  */
 
 class GrpcClient {
-    constructor(serverAddresses = ['localhost:50051', 'localhost:50052', 'localhost:50053']) {
-        const addressList = serverAddresses.join(',');
-        this.serverAddress = `dns:///${addressList}`;
+    constructor(/* serverAddresses = ['localhost:50051', 'localhost:50052', 'localhost:50053'] */) {
+        /* this.serverAddress = `dns:///localhost:50051,localhost:50052,localhost:50053`; */
+        this.serverAddress = `dns:///localhost:50051`;
         this.protoLoader = new ProtoLoader();
         this.authClient = null;
         this.taskClient = null;
+        this.chatClient = null;
         this.currentToken = null;
     }
 
@@ -23,12 +24,14 @@ class GrpcClient {
             // Carregar protobuf
             const authProto = this.protoLoader.loadProto('auth_service.proto', 'auth');
             const taskProto = this.protoLoader.loadProto('task_service.proto', 'tasks');
+            const chatProto = this.protoLoader.loadProto('chat_service.proto', 'chat');
 
             // Criar clientes
             const credentials = grpc.credentials.createInsecure();
-            
+
             this.authClient = new authProto.AuthService(this.serverAddress, credentials);
             this.taskClient = new taskProto.TaskService(this.serverAddress, credentials);
+            this.chatClient = new chatProto.ChatService(this.serverAddress, credentials);
 
             console.log('✅ Cliente gRPC inicializado');
         } catch (error) {
@@ -60,12 +63,12 @@ class GrpcClient {
     async login(credentials) {
         const loginPromise = this.promisify(this.authClient, 'Login');
         const response = await loginPromise(credentials);
-        
+
         if (response.success) {
             this.currentToken = response.token;
             console.log('🔑 Token obtido com sucesso');
         }
-        
+
         return response;
     }
 
@@ -168,12 +171,51 @@ class GrpcClient {
 
         return stream;
     }
+
+    /**
+     * Inicia o stream bidirecional de chat
+     */
+    startChatStream() {
+        if (!this.currentToken) {
+            console.error('❌ Não é possível iniciar o chat sem estar logado.');
+            return null;
+        }
+
+        const call = this.chatClient.StreamChat();
+
+        // Lida com mensagens recebidas do servidor
+        call.on('data', (response) => {
+            const message = response.message;
+            if (message) {
+                const timestamp = new Date(parseInt(message.timestamp) * 1000);
+                console.log(`[${timestamp.toLocaleTimeString()}] <${message.username}>: ${message.content}`);
+            }
+        });
+
+        // Lida com o encerramento do stream pelo servidor
+        call.on('end', () => {
+            console.log('🔔 Stream de chat finalizado pelo servidor.');
+        });
+
+        // Lida com erros do stream
+        call.on('error', (error) => {
+            console.error('❌ Erro no stream de chat:', error.details);
+        });
+
+        // Envia a primeira mensagem para autenticar e entrar no chat
+        call.write({
+            token: this.currentToken,
+            type: 1 // USER_JOINED
+        });
+
+        return call;
+    }
 }
 
 // Demonstração de uso
 async function demonstrateGrpcClient() {
     const client = new GrpcClient();
-    
+
     try {
         await client.initialize();
 
@@ -231,10 +273,45 @@ async function demonstrateGrpcClient() {
         const statsResponse = await client.getStats();
         console.log('Stats:', statsResponse.stats);
 
+        // 7. Iniciando o chat em tempo real
+        console.log('\n💬 Conectando ao chat. Digite suas mensagens e pressione Enter.');
+        const chatStream = client.startChatStream();
+
+        // Envia uma mensagem de teste para o chat após 3 segundos
+        setTimeout(() => {
+            console.log("\n[Teste automatizado]: Enviando mensagem de teste...");
+            if (chatStream) {
+                chatStream.write({
+                    token: client.currentToken,
+                    type: 0, // CHAT_MESSAGE
+                    message: {
+                        content: 'Olá! Sou um teste automatizado.'
+                    }
+                });
+            }
+        }, 3000);
+
+        // Permite que o usuário digite mensagens no terminal
+        process.stdin.on('data', (data) => {
+            const message = data.toString().trim();
+            if (message && chatStream) {
+                chatStream.write({
+                    token: client.currentToken,
+                    type: 0, // CHAT_MESSAGE
+                    message: {
+                        content: message
+                    }
+                });
+            }
+        });
+
+        // Mantém o processo em execução para o stream continuar
+        console.log('Demonstrações de RPC concluídas. O chat está ativo. Pressione Ctrl+C para sair.');
+
         // 7. Demonstrar streaming (comentado para evitar loop infinito)
         // console.log('\n7. Iniciando stream de notificações...');
         // const notificationStream = client.streamNotifications();
-        
+
         // Manter stream aberto por alguns segundos
         // setTimeout(() => notificationStream.cancel(), 5000);
 
