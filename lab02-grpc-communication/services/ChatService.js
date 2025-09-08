@@ -1,5 +1,6 @@
 const { status } = require('@grpc/grpc-js');
 const jwt = require('jsonwebtoken');
+const readline = require('readline');
 
 // Mapa para gerenciar os streams ativos dos clientes
 const activeStreams = new Map();
@@ -109,7 +110,7 @@ class ChatService {
     }
 }
 
-/* // === Prompt para enviar mensagens pelo console do servidor ===
+// Prompt para enviar mensagens pelo console do servidor
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -131,6 +132,6 @@ rl.on('line', (input) => {
         }
         console.log(`🖥️ [Servidor]: ${message}`);
     }
-}); */
+});
 
 module.exports = ChatService;
