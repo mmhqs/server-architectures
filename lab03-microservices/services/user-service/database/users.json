@@ -1,0 +1,16 @@
+[
+  {
+    "id": "395c75b0-e2c0-44fb-8738-89300ba1d08b",
+    "email": "admin@microservices.com",
+    "username": "admin",
+    "password": "$2a$12$Ztqd8TbJKvXyfMKoKT7T3OhV1LxphEaoFXCv/LgJcBDODvg5gJRDm",
+    "firstName": "Administrador",
+    "lastName": "Sistema",
+    "preferences": {
+      "defaultStore": "Carrefour",
+      "currency": "Real"
+    },
+    "createdAt": "2025-09-21T23:38:11.962Z",
+    "updatedAt": "2025-09-21T23:38:11.964Z"
+  }
+]

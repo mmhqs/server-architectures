@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const axios = require('axios');
-
 const JsonDatabase = require('../../shared/JsonDatabase');
 const serviceRegistry = require('../../shared/serviceRegistry');
-
+let uuidv4;
+import('uuid').then(uuid => {
+    uuidv4 = uuid.v4;
+});
 class ListService {
     constructor() {
         this.app = express();
@@ -94,12 +95,12 @@ class ListService {
     }
 
     setupErrorHandling() {
-        this.app.use('*', (req, res) => {
-            res.status(404).json({
-                success: false,
-                message: 'Endpoint não encontrado',
-                service: this.serviceName
-            });
+        this.app.use((req, res, next) => {
+        res.status(404).json({
+            success: false,
+            message: 'Endpoint não encontrado',
+            service: this.serviceName
+        });
         });
 
         this.app.use((error, req, res, next) => {

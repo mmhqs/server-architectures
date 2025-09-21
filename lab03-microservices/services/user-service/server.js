@@ -182,10 +182,10 @@ class UserService {
 
     async register(req, res) {
         try {
-            const { email, username, password, firstName, lastName, preferences } = req.body;
+            const { email, username, password, firstName, lastName, preferences = {} } = req.body;
+            const { defaultStore, currency } = preferences;
 
-            const { defaultStore, currency } = preferences
-
+            // Validações básicas, incluindo as novas propriedades de preferences
             if (!email || !username || !password || !firstName || !lastName || !defaultStore || !currency) {
                 return res.status(400).json({
                     success: false,
@@ -193,6 +193,7 @@ class UserService {
                 });
             }
 
+            // Verificar se usuário já existe
             const existingEmail = await this.usersDb.findOne({ email: email.toLowerCase() });
             const existingUsername = await this.usersDb.findOne({ username: username.toLowerCase() });
 
@@ -213,6 +214,8 @@ class UserService {
             // Hash password
             const hashedPassword = await bcrypt.hash(password, 12);
 
+            const now = new Date().toISOString();
+
             // Criar usuário com schema NoSQL flexível
             const newUser = await this.usersDb.create({
                 id: uuidv4(),
@@ -221,12 +224,14 @@ class UserService {
                 password: hashedPassword,
                 firstName,
                 lastName,
+                role: 'user', // Adicionei a role, pois o código de login a espera
+                status: 'active', // Adicionei o status, pois o código de login o espera
                 preferences: {
                     defaultStore,
                     currency,
                 },
-                createdAt,
-                updatedAt,
+                createdAt: now,
+                updatedAt: now
             });
 
             const { password: _, ...userWithoutPassword } = newUser;
@@ -236,6 +241,7 @@ class UserService {
                     id: newUser.id, 
                     email: newUser.email, 
                     username: newUser.username,
+                    role: newUser.role, // A role também é necessária para o token
                 },
                 process.env.JWT_SECRET || 'user-secret',
                 { expiresIn: '24h' }
@@ -255,7 +261,6 @@ class UserService {
         }
     }
 
-    // Login user
     async login(req, res) {
         try {
             const { identifier, password } = req.body;

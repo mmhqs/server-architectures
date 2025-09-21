@@ -346,7 +346,6 @@ class ItemService {
                     'GET /items/:id',
                     'POST /items',
                     'PUT /items/:id',
-                    'DELETE /items/:id',
                     'GET /search'
                 ]
             });
@@ -356,7 +355,6 @@ class ItemService {
         this.app.get('/items/:id', this.getItem.bind(this));
         this.app.post('/items', this.authMiddleware.bind(this), this.createItem.bind(this));
         this.app.put('/items/:id', this.authMiddleware.bind(this), this.updateItem.bind(this));
-        this.app.delete('/items/:id', this.authMiddleware.bind(this), this.deleteItem.bind(this));
         this.app.get('/search', this.searchItems.bind(this));
     }
 
