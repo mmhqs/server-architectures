@@ -6,8 +6,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-
-// Importar banco NoSQL e service registry
 const JsonDatabase = require('../../shared/JsonDatabase');
 const serviceRegistry = require('../../shared/serviceRegistry');
 
@@ -47,11 +45,16 @@ class UserService {
                         password: adminPassword,
                         firstName: 'Administrador',
                         lastName: 'Sistema',
-                        role: 'admin',
-                        status: 'active'
+                        preferences: {
+                            defaultStore: 'Carrefour',
+                            currency: 'Real',
+                        },
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+
                     });
 
-                    console.log('Usuário administrador criado (admin@microservices.com / admin123)');
+                    console.log('Primeiro usuário criado (admin@microservices.com / admin123)');
                 }
             } catch (error) {
                 console.error('Erro ao criar dados iniciais:', error);
@@ -177,20 +180,19 @@ class UserService {
         }
     }
 
-    // Register user
     async register(req, res) {
         try {
-            const { email, username, password, firstName, lastName } = req.body;
+            const { email, username, password, firstName, lastName, preferences } = req.body;
 
-            // Validações básicas
-            if (!email || !username || !password || !firstName || !lastName) {
+            const { defaultStore, currency } = preferences
+
+            if (!email || !username || !password || !firstName || !lastName || !defaultStore || !currency) {
                 return res.status(400).json({
                     success: false,
                     message: 'Todos os campos são obrigatórios'
                 });
             }
 
-            // Verificar se usuário já existe
             const existingEmail = await this.usersDb.findOne({ email: email.toLowerCase() });
             const existingUsername = await this.usersDb.findOne({ username: username.toLowerCase() });
 
@@ -219,21 +221,12 @@ class UserService {
                 password: hashedPassword,
                 firstName,
                 lastName,
-                role: 'user',
-                status: 'active',
-                profile: {
-                    bio: null,
-                    avatar: null,
-                    preferences: {
-                        theme: 'light',
-                        language: 'pt-BR'
-                    }
+                preferences: {
+                    defaultStore,
+                    currency,
                 },
-                metadata: {
-                    registrationDate: new Date().toISOString(),
-                    lastLogin: null,
-                    loginCount: 0
-                }
+                createdAt,
+                updatedAt,
             });
 
             const { password: _, ...userWithoutPassword } = newUser;
@@ -243,7 +236,6 @@ class UserService {
                     id: newUser.id, 
                     email: newUser.email, 
                     username: newUser.username,
-                    role: newUser.role 
                 },
                 process.env.JWT_SECRET || 'user-secret',
                 { expiresIn: '24h' }
@@ -299,8 +291,7 @@ class UserService {
 
             // Atualizar dados de login (demonstrando flexibilidade NoSQL)
             await this.usersDb.update(user.id, {
-                'metadata.lastLogin': new Date().toISOString(),
-                'metadata.loginCount': (user.metadata?.loginCount || 0) + 1
+                'updatedAt': new Date().toISOString(),
             });
 
             const { password: _, ...userWithoutPassword } = user;
@@ -310,7 +301,6 @@ class UserService {
                     id: user.id, 
                     email: user.email, 
                     username: user.username,
-                    role: user.role 
                 },
                 process.env.JWT_SECRET || 'user-secret',
                 { expiresIn: '24h' }
@@ -367,16 +357,13 @@ class UserService {
         }
     }
 
-    // Get users (com paginação)
     async getUsers(req, res) {
         try {
-            const { page = 1, limit = 10, role, status } = req.query;
+            const { page = 1, limit = 10 } = req.query;
             const skip = (page - 1) * parseInt(limit);
 
             // Filtros NoSQL flexíveis
             const filter = {};
-            if (role) filter.role = role;
-            if (status) filter.status = status;
 
             const users = await this.usersDb.find(filter, {
                 skip: skip,
@@ -424,8 +411,7 @@ class UserService {
                 });
             }
 
-            // Verificar permissão (usuário só vê próprio perfil ou admin vê tudo)
-            if (req.user.id !== id && req.user.role !== 'admin') {
+            if (req.user.id !== id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Acesso negado'
@@ -451,10 +437,11 @@ class UserService {
     async updateUser(req, res) {
         try {
             const { id } = req.params;
-            const { firstName, lastName, email, bio, theme, language } = req.body;
+            const { firstName, lastName, email, preferences } = req.body;
 
-            // Verificar permissão
-            if (req.user.id !== id && req.user.role !== 'admin') {
+            const { defaultStore, currency } = preferences
+
+            if (req.user.id !== id) {
                 return res.status(403).json({
                     success: false,
                     message: 'Acesso negado'
@@ -474,11 +461,8 @@ class UserService {
             if (firstName) updates.firstName = firstName;
             if (lastName) updates.lastName = lastName;
             if (email) updates.email = email.toLowerCase();
-            
-            // Atualizar campos aninhados (demonstrando NoSQL)
-            if (bio !== undefined) updates['profile.bio'] = bio;
-            if (theme) updates['profile.preferences.theme'] = theme;
-            if (language) updates['profile.preferences.language'] = language;
+            if (defaultStore) updates.defaultStore = defaultStore;
+            if (currency) updates.currency = currency;
 
             const updatedUser = await this.usersDb.update(id, updates);
             const { password, ...userWithoutPassword } = updatedUser;
@@ -548,7 +532,6 @@ class UserService {
         });
     }
 
-    // Start health check reporting
     startHealthReporting() {
         setInterval(() => {
             serviceRegistry.updateHealth(this.serviceName, true);
