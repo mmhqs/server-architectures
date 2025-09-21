@@ -68,6 +68,7 @@ class APIGateway {
                 endpoints: {
                     users: '/api/users/*',
                     items: '/api/items/*',
+                    lists: '/api/lists/*', // Adicionado
                     health: '/health',
                     registry: '/registry',
                     dashboard: '/api/dashboard',
@@ -108,6 +109,13 @@ class APIGateway {
             this.proxyRequest('item-service', req, res, next);
         });
 
+        // --- Novo roteamento para o List Service ---
+        this.app.use('/api/lists', (req, res, next) => {
+            console.log(`🔗 Roteando para list-service: ${req.method} ${req.originalUrl}`);
+            this.proxyRequest('list-service', req, res, next);
+        });
+        // --- Fim do novo roteamento ---
+
         // Endpoints agregados
         this.app.get('/api/dashboard', this.getDashboard.bind(this));
         this.app.get('/api/search', this.globalSearch.bind(this));
@@ -122,6 +130,7 @@ class APIGateway {
                 availableEndpoints: {
                     users: '/api/users',
                     items: '/api/items',
+                    lists: '/api/lists',
                     dashboard: '/api/dashboard',
                     search: '/api/search'
                 }
@@ -179,14 +188,10 @@ class APIGateway {
             
             // Extrair o path correto baseado no serviço
             if (serviceName === 'user-service') {
-                // /api/users/auth/login -> /auth/login
-                // /api/users -> /users
-                // /api/users/123 -> /users/123
                 targetPath = originalPath.replace('/api/users', '');
                 if (!targetPath.startsWith('/')) {
                     targetPath = '/' + targetPath;
                 }
-                // Se path vazio, usar /users
                 if (targetPath === '/' || targetPath === '') {
                     targetPath = '/users';
                 }
@@ -197,6 +202,14 @@ class APIGateway {
                 }
                 if (targetPath === '/' || targetPath === '') {
                     targetPath = '/items';
+                }
+            } else if (serviceName === 'list-service') {
+                targetPath = originalPath.replace('/api/lists', '');
+                if (!targetPath.startsWith('/')) {
+                    targetPath = '/' + targetPath;
+                }
+                if (targetPath === '/' || targetPath === '') {
+                    targetPath = '/lists';
                 }
             }
             
@@ -337,10 +350,11 @@ class APIGateway {
             }
 
             // Buscar dados de múltiplos serviços
-            const [userResponse, itemResponse, categoriesResponse] = await Promise.allSettled([
+            const [userResponse, itemResponse, categoriesResponse, listsResponse] = await Promise.allSettled([
                 this.callService('user-service', '/users', 'GET', authHeader, { limit: 5 }),
                 this.callService('item-service', '/items', 'GET', null, { limit: 5 }),
-                this.callService('item-service', '/categories', 'GET', null, {})
+                this.callService('item-service', '/categories', 'GET', null, {}),
+                this.callService('list-service', '/lists', 'GET', authHeader, {})
             ]);
 
             const dashboard = {
@@ -363,6 +377,11 @@ class APIGateway {
                         available: categoriesResponse.status === 'fulfilled',
                         data: categoriesResponse.status === 'fulfilled' ? categoriesResponse.value.data : null,
                         error: categoriesResponse.status === 'rejected' ? categoriesResponse.reason.message : null
+                    },
+                    lists: {
+                        available: listsResponse.status === 'fulfilled',
+                        data: listsResponse.status === 'fulfilled' ? listsResponse.value.data : null,
+                        error: listsResponse.status === 'rejected' ? listsResponse.reason.message : null
                     }
                 }
             };
@@ -399,11 +418,12 @@ class APIGateway {
 
             if (authHeader) {
                 searches.push(
-                    this.callService('user-service', '/search', 'GET', authHeader, { q, limit: 5 })
+                    this.callService('user-service', '/search', 'GET', authHeader, { q, limit: 5 }),
+                    this.callService('list-service', '/search', 'GET', authHeader, { q, limit: 5 })
                 );
             }
 
-            const [itemResults, userResults] = await Promise.allSettled(searches);
+            const [itemResults, userResults, listResults] = await Promise.allSettled(searches);
 
             const results = {
                 query: q,
@@ -414,12 +434,19 @@ class APIGateway {
                 }
             };
 
-            // Adicionar resultados de usuários se a busca foi feita
             if (userResults) {
                 results.users = {
                     available: userResults.status === 'fulfilled',
                     results: userResults.status === 'fulfilled' ? userResults.value.data.results : [],
                     error: userResults.status === 'rejected' ? userResults.reason.message : null
+                };
+            }
+            
+            if (listResults) {
+                results.lists = {
+                    available: listResults.status === 'fulfilled',
+                    results: listResults.status === 'fulfilled' ? listResults.value.data.results : [],
+                    error: listResults.status === 'rejected' ? listResults.reason.message : null
                 };
             }
 
@@ -438,7 +465,7 @@ class APIGateway {
     }
 
     // Helper para chamar serviços
-    async callService(serviceName, path, method = 'GET', authHeader = null, params = {}) {
+    async callService(serviceName, path, method = 'GET', authHeader = null, params = {}, body = {}) {
         const service = serviceRegistry.discover(serviceName);
         
         const config = {
@@ -453,8 +480,10 @@ class APIGateway {
 
         if (method === 'GET' && Object.keys(params).length > 0) {
             config.params = params;
+        } else if (['POST', 'PUT', 'PATCH'].includes(method) && Object.keys(body).length > 0) {
+            config.data = body;
         }
-
+        
         const response = await axios(config);
         return response.data;
     }
@@ -482,12 +511,13 @@ class APIGateway {
             console.log(`Architecture: Microservices with NoSQL`);
             console.log('=====================================');
             console.log('Rotas disponíveis:');
-            console.log('   POST /api/auth/register');
-            console.log('   POST /api/auth/login');
-            console.log('   GET  /api/users');
-            console.log('   GET  /api/items');
-            console.log('   GET  /api/search?q=termo');
-            console.log('   GET  /api/dashboard');
+            console.log('   POST /api/auth/register');
+            console.log('   POST /api/auth/login');
+            console.log('   GET  /api/users');
+            console.log('   GET  /api/items');
+            console.log('   GET  /api/lists');
+            console.log('   GET  /api/search?q=termo');
+            console.log('   GET  /api/dashboard');
             console.log('=====================================');
         });
     }
