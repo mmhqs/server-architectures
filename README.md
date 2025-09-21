@@ -7,6 +7,7 @@ This repo presents different server architectures and evaluates characteristics,
 ### Servers
 - **Lab01**: traditional server.
 - **Lab02**: gRPC (Google Remote Procedure Call) communication between client and server.
+- **Lab03**: microservices.
 
 ### Architectural highlights
 #### Traditional server

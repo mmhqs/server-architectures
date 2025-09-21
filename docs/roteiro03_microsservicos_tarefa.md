@@ -1,18 +1,5 @@
 # Atividade Prática: Sistema de Lista de Compras com Microsserviços
 
-<div style="text-align: center; margin-bottom: 40px;">
-  <img src="https://www.pucminas.br/institucional/PublishingImages/Paginas/brasao/brasao-pucminas-versao-2025.png" alt="PUC Minas" class="logo-puc" style="height: 80px; margin-right: 20px;">
-  <img src="https://sbbd.org.br/2023/wp-content/uploads/sites/16/2023/08/assinatura_icei_COR_2023-edited.jpg" alt="ICEI" class="logo-icei" style="height: 80px; margin-left: 20px;">
-</div>
-
-**Laboratório de Desenvolvimento de Aplicações Móveis e Distribuídas**  
-**Instituto de Ciências Exatas e Informática (ICEI)**  
-**Pontifícia Universidade Católica de Minas Gerais**
-
-**Professores:** Artur Mol, Cleiton Tavares e Cristiano Neto
-
----
-
 ## Objetivo
 
 Desenvolver um sistema distribuído para gerenciamento de listas de compras utilizando arquitetura de microsserviços com API Gateway, Service Discovery e bancos NoSQL independentes.
