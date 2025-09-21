@@ -3,8 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const axios = require('axios');
-
-// Importar service registry
 const serviceRegistry = require('../shared/serviceRegistry');
 
 class APIGateway {
@@ -20,7 +18,7 @@ class APIGateway {
         this.setupErrorHandling();
         setTimeout(() => {
             this.startHealthChecks();
-        }, 3000); // Aguardar 3 segundos antes de iniciar health checks
+        }, 3000);
     }
 
     setupMiddleware() {
@@ -69,7 +67,7 @@ class APIGateway {
                 database_approach: 'Database per Service (JSON-NoSQL)',
                 endpoints: {
                     users: '/api/users/*',
-                    products: '/api/products/*',
+                    items: '/api/items/*',
                     health: '/health',
                     registry: '/registry',
                     dashboard: '/api/dashboard',
@@ -100,16 +98,14 @@ class APIGateway {
             });
         });
 
-        // User Service routes - CORRIGIDO
         this.app.use('/api/users', (req, res, next) => {
             console.log(`🔗 Roteando para user-service: ${req.method} ${req.originalUrl}`);
             this.proxyRequest('user-service', req, res, next);
         });
 
-        // Product Service routes - CORRIGIDO  
-        this.app.use('/api/products', (req, res, next) => {
-            console.log(`🔗 Roteando para product-service: ${req.method} ${req.originalUrl}`);
-            this.proxyRequest('product-service', req, res, next);
+        this.app.use('/api/items', (req, res, next) => {
+            console.log(`🔗 Roteando para item-service: ${req.method} ${req.originalUrl}`);
+            this.proxyRequest('item-service', req, res, next);
         });
 
         // Endpoints agregados
@@ -125,7 +121,7 @@ class APIGateway {
                 service: 'api-gateway',
                 availableEndpoints: {
                     users: '/api/users',
-                    products: '/api/products',
+                    items: '/api/items',
                     dashboard: '/api/dashboard',
                     search: '/api/search'
                 }
@@ -194,16 +190,13 @@ class APIGateway {
                 if (targetPath === '/' || targetPath === '') {
                     targetPath = '/users';
                 }
-            } else if (serviceName === 'product-service') {
-                // /api/products -> /products
-                // /api/products/123 -> /products/123
-                targetPath = originalPath.replace('/api/products', '');
+            } else if (serviceName === 'item-service') {
+                targetPath = originalPath.replace('/api/items', '');
                 if (!targetPath.startsWith('/')) {
                     targetPath = '/' + targetPath;
                 }
-                // Se path vazio, usar /products
                 if (targetPath === '/' || targetPath === '') {
-                    targetPath = '/products';
+                    targetPath = '/items';
                 }
             }
             
@@ -344,10 +337,10 @@ class APIGateway {
             }
 
             // Buscar dados de múltiplos serviços
-            const [userResponse, productsResponse, categoriesResponse] = await Promise.allSettled([
+            const [userResponse, itemResponse, categoriesResponse] = await Promise.allSettled([
                 this.callService('user-service', '/users', 'GET', authHeader, { limit: 5 }),
-                this.callService('product-service', '/products', 'GET', null, { limit: 5 }),
-                this.callService('product-service', '/categories', 'GET', null, {})
+                this.callService('item-service', '/items', 'GET', null, { limit: 5 }),
+                this.callService('item-service', '/categories', 'GET', null, {})
             ]);
 
             const dashboard = {
@@ -361,10 +354,10 @@ class APIGateway {
                         data: userResponse.status === 'fulfilled' ? userResponse.value.data : null,
                         error: userResponse.status === 'rejected' ? userResponse.reason.message : null
                     },
-                    products: {
-                        available: productsResponse.status === 'fulfilled',
-                        data: productsResponse.status === 'fulfilled' ? productsResponse.value.data : null,
-                        error: productsResponse.status === 'rejected' ? productsResponse.reason.message : null
+                    items: {
+                        available: itemResponse.status === 'fulfilled',
+                        data: itemResponse.status === 'fulfilled' ? itemResponse.value.data : null,
+                        error: itemResponse.status === 'rejected' ? itemResponse.reason.message : null
                     },
                     categories: {
                         available: categoriesResponse.status === 'fulfilled',
@@ -388,7 +381,6 @@ class APIGateway {
         }
     }
 
-    // Busca global entre serviços
     async globalSearch(req, res) {
         try {
             const { q } = req.query;
@@ -400,27 +392,25 @@ class APIGateway {
                 });
             }
 
-            // Buscar em produtos e usuários (se autenticado)
             const authHeader = req.header('Authorization');
             const searches = [
-                this.callService('product-service', '/search', 'GET', null, { q })
+                this.callService('item-service', '/search', 'GET', null, { q })
             ];
 
-            // Adicionar busca de usuários se autenticado
             if (authHeader) {
                 searches.push(
                     this.callService('user-service', '/search', 'GET', authHeader, { q, limit: 5 })
                 );
             }
 
-            const [productResults, userResults] = await Promise.allSettled(searches);
+            const [itemResults, userResults] = await Promise.allSettled(searches);
 
             const results = {
                 query: q,
-                products: {
-                    available: productResults.status === 'fulfilled',
-                    results: productResults.status === 'fulfilled' ? productResults.value.data.results : [],
-                    error: productResults.status === 'rejected' ? productResults.reason.message : null
+                items: {
+                    available: itemResults.status === 'fulfilled',
+                    results: itemResults.status === 'fulfilled' ? itemResults.value.data.results : [],
+                    error: itemResults.status === 'rejected' ? itemResults.reason.message : null
                 }
             };
 
@@ -495,7 +485,7 @@ class APIGateway {
             console.log('   POST /api/auth/register');
             console.log('   POST /api/auth/login');
             console.log('   GET  /api/users');
-            console.log('   GET  /api/products');
+            console.log('   GET  /api/items');
             console.log('   GET  /api/search?q=termo');
             console.log('   GET  /api/dashboard');
             console.log('=====================================');
