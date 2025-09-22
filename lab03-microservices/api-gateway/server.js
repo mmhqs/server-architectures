@@ -488,13 +488,11 @@ class APIGateway {
         return response.data;
     }
 
-    // Health checks para serviços registrados
     startHealthChecks() {
         setInterval(async () => {
             await serviceRegistry.performHealthChecks();
-        }, 30000); // A cada 30 segundos
+        }, 30000);
 
-        // Health check inicial
         setTimeout(async () => {
             await serviceRegistry.performHealthChecks();
         }, 5000);
@@ -511,13 +509,13 @@ class APIGateway {
             console.log(`Architecture: Microservices with NoSQL`);
             console.log('=====================================');
             console.log('Rotas disponíveis:');
-            console.log('   POST /api/auth/register');
-            console.log('   POST /api/auth/login');
-            console.log('   GET  /api/users');
-            console.log('   GET  /api/items');
-            console.log('   GET  /api/lists');
-            console.log('   GET  /api/search?q=termo');
-            console.log('   GET  /api/dashboard');
+            console.log('POST/api/auth/register');
+            console.log('POST/api/auth/login');
+            console.log('GET/api/users');
+            console.log('GET/api/items');
+            console.log('GET/api/lists');
+            console.log('GET/api/search?q=termo');
+            console.log('GET/api/dashboard');
             console.log('=====================================');
         });
     }

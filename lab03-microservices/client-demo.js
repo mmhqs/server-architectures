@@ -5,7 +5,7 @@ class MicroservicesClient {
         this.gatewayUrl = gatewayUrl;
         this.authToken = null;
         this.user = null;
-        
+
         // Configurar axios
         this.api = axios.create({
             baseURL: gatewayUrl,
@@ -40,7 +40,7 @@ class MicroservicesClient {
         try {
             console.log('\n1. Registrando usuário...');
             const response = await this.api.post('/api/users/auth/register', userData);
-            
+
             if (response.data.success) {
                 this.authToken = response.data.data.token;
                 this.user = response.data.data.user;
@@ -60,7 +60,7 @@ class MicroservicesClient {
         try {
             console.log('\n2. Fazendo login...');
             const response = await this.api.post('/api/users/auth/login', credentials);
-            
+
             if (response.data.success) {
                 this.authToken = response.data.data.token;
                 this.user = response.data.data.user;
@@ -80,7 +80,7 @@ class MicroservicesClient {
         try {
             console.log('\n3. Buscando itens...');
             const response = await this.api.get('/api/items/search', { params: { q: query } });
-            
+
             if (response.data.success) {
                 const results = response.data.data.results;
                 console.log(`✅ Encontrados ${results.length} itens para "${query}"`);
@@ -140,7 +140,7 @@ class MicroservicesClient {
         try {
             console.log('\n6. Visualizando o Dashboard...');
             const response = await this.api.get('/api/dashboard');
-            
+
             if (response.data.success) {
                 const dashboard = response.data.data;
                 console.log('✅ Dashboard carregado com sucesso.');
@@ -177,7 +177,11 @@ class MicroservicesClient {
                 username: `list_user${uniqueId}`,
                 password: 'password123',
                 firstName: 'Demo',
-                lastName: 'Listas'
+                lastName: 'Listas',
+                preferences: {
+                    defaultStore: 'Bombom',
+                    currency: 'real'
+                },
             };
             await this.register(userData);
             await this.delay(1000);
@@ -188,7 +192,7 @@ class MicroservicesClient {
                 password: 'password123'
             });
             await this.delay(1000);
-            
+
             // Passo 3: Buscar itens disponíveis (para pegar IDs)
             const availableItems = await this.searchItems('Smartphone');
             if (availableItems.length === 0) {
@@ -218,7 +222,7 @@ class MicroservicesClient {
             // Passo 6: Visualizar o dashboard (agora incluindo informações de listas)
             await this.getDashboard();
             await this.delay(1000);
-            
+
             console.log('\n=====================================');
             console.log('FLUXO DE DEMONSTRAÇÃO CONCLUÍDO!');
             console.log('=====================================');
@@ -226,7 +230,7 @@ class MicroservicesClient {
             console.error('Um erro ocorreu durante a demonstração:', error.message);
         }
     }
-    
+
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

@@ -12,5 +12,53 @@
     },
     "createdAt": "2025-09-21T23:38:11.962Z",
     "updatedAt": "2025-09-21T23:38:11.964Z"
+  },
+  {
+    "id": "1affb4f9-9ada-465b-84c1-64cb3a07c6e5",
+    "email": "listdemo1758499330511@example.com",
+    "username": "list_user1758499330511",
+    "password": "$2a$12$.JXtVx1HlGn5T5pnb1gca.y9d88a3EHKqp7fQW/ogWbRQZAAIbHwi",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "admin",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:02:10.854Z",
+    "updatedAt": "2025-09-22T00:02:10.857Z"
+  },
+  {
+    "id": "9aedc661-3601-4cfb-9a80-9fe891a3ddb2",
+    "email": "listdemo1758499450834@example.com",
+    "username": "list_user1758499450834",
+    "password": "$2a$12$2.ZGjhe8js5vwTi8aZNd6ucrp1YJ4rEyRK//T/EX4Exgt.DFLoevu",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "admin",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:04:11.139Z",
+    "updatedAt": "2025-09-22T00:04:11.140Z"
+  },
+  {
+    "id": "acdc5725-de5d-45cf-8d5e-b3168072828e",
+    "email": "listdemo1758499481606@example.com",
+    "username": "list_user1758499481606",
+    "password": "$2a$12$dfSIbe..Xr12nXbQhAVOVe8NDDumAVvCYudHu6HA9yTXpy/ngI9.q",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:04:41.932Z",
+    "updatedAt": "2025-09-22T00:04:41.934Z"
   }
 ]
