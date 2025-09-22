@@ -224,8 +224,8 @@ class UserService {
                 password: hashedPassword,
                 firstName,
                 lastName,
-                role: 'user', // Adicionei a role, pois o código de login a espera
-                status: 'active', // Adicionei o status, pois o código de login o espera
+                role: 'user',
+                status: 'active',
                 preferences: {
                     defaultStore,
                     currency,
@@ -286,7 +286,6 @@ class UserService {
                 });
             }
 
-            // Verificar se usuário está ativo
             if (user.status !== 'active') {
                 return res.status(403).json({
                     success: false,
@@ -325,7 +324,6 @@ class UserService {
         }
     }
 
-    // Validate token
     async validateToken(req, res) {
         try {
             const { token } = req.body;
