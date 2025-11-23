@@ -21,6 +21,9 @@ class ListService {
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
+
+        this.rabbitChannel = null;
+        this.setupRabbitMQ();
     }
 
     setupDatabase() {
@@ -43,6 +46,16 @@ class ListService {
             res.setHeader('X-Database', 'JSON-NoSQL');
             next();
         });
+    }
+
+    async setupRabbitMQ() {
+        try {
+            this.rabbitChannel = await connectRabbitMQ();
+        } catch (error) {
+            console.error("Setup RabbitMQ falhou na inicialização. Publicação não estará ativa.");
+            // O serviço pode continuar rodando (graceful degradation) ou pode ser parado
+            // dependendo da criticidade da fila.
+        }
     }
 
     setupRoutes() {
@@ -92,6 +105,7 @@ class ListService {
         this.app.put('/lists/:id/items/:itemId', this.authMiddleware.bind(this), this.updateListItem.bind(this));
         this.app.delete('/lists/:id/items/:itemId', this.authMiddleware.bind(this), this.deleteListItem.bind(this));
         this.app.get('/lists/:id/summary', this.authMiddleware.bind(this), this.getListSummary.bind(this));
+        this.app.post('/lists/:id/checkout', this.authMiddleware.bind(this), this.checkoutList.bind(this));
     }
 
     setupErrorHandling() {
@@ -450,7 +464,10 @@ class ListService {
         }, 30000);
     }
 
-    start() {
+    async start() {
+        // Garante que o setup do RabbitMQ seja concluído antes de iniciar o servidor
+        await this.setupRabbitMQ();
+
         this.app.listen(this.port, () => {
             console.log('=====================================');
             console.log(`List Service iniciado na porta ${this.port}`);
@@ -462,6 +479,53 @@ class ListService {
             this.registerWithRegistry();
             this.startHealthReporting();
         });
+    }
+
+    async checkoutList(req, res) {
+        const { id } = req.params;
+        const userId = req.user.id; // Assumindo que o authMiddleware preencheu req.user
+
+        try {
+            // 1. Validar e buscar a lista no DB
+            const list = await this.listsDb.findOne({ id, userId });
+            if (!list) {
+                return res.status(404).json({ success: false, message: 'Lista não encontrada' });
+            }
+
+            // 2. Montar a mensagem para a fila
+            const messageData = {
+                listId: list.id,
+                userId: list.userId,
+                // Envie apenas os dados relevantes para o processamento assíncrono
+                items: list.items.map(item => ({
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                    purchased: item.purchased,
+                    estimatedPrice: item.estimatedPrice
+                })),
+                checkoutTimestamp: new Date().toISOString()
+            };
+            
+            // 3. Publicar no RabbitMQ (Usa a função do módulo externo)
+            const published = publishListCheckout(messageData);
+            
+            if (!published) {
+                // Se o canal não estava ativo ou o buffer estava cheio (raro com persistent: true)
+                console.warn(`[RabbitMQ] Falha ao publicar evento de checkout para lista ${id}.`);
+                // Mesmo com falha na publicação, podemos retornar 202, mas é melhor logar/alertar.
+            }
+
+            // 4. Retornar 202 Accepted IMEDIATAMENTE
+            // Este status indica que a requisição foi aceita para processamento.
+            return res.status(202).json({ 
+                success: true, 
+                message: 'Checkout aceito. Processamento da lista iniciado em segundo plano.',
+            });
+
+        } catch (error) {
+            console.error('Erro no checkout da lista:', error);
+            res.status(500).json({ success: false, message: 'Erro interno do servidor ao processar checkout' });
+        }
     }
 }
 

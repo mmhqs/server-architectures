@@ -38,6 +38,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
+    "amqplib": "^0.10.9",
     "axios": "^1.6.0",
     "fs-extra": "^11.3.2",
     "uuid": "^9.0.0"

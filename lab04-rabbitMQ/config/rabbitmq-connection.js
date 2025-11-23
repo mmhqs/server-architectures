@@ -6,36 +6,66 @@ const QUEUE_NAME = 'list_checkout_processor';
 const ROUTING_KEY = 'list.checkout.completed';
 const AMQP_URL = 'amqp://localhost'; // Altere conforme o endereço do seu broker
 
-async function setupRabbitMQ() {
+let connection = null;
+let channel = null;
+
+async function connectAndSetup() {
+    // Se a conexão já existe, retorna os objetos existentes.
+    if (channel) return { connection, channel };
+
     try {
         // 1. Conectar-se ao RabbitMQ
-        const connection = await amqp.connect(AMQP_URL);
-        const channel = await connection.createChannel();
+        connection = await amqp.connect(AMQP_URL);
+        channel = await connection.createChannel();
 
-        // 2. Declarar o Exchange (Topic, Durável)
-        // O tipo 'topic' é recomendado para roteamento baseado em padrões como o seu.
+        // 2. Declarar o Exchange (O Produtor só PRECISA disso para publicar)
         await channel.assertExchange(EXCHANGE_NAME, 'topic', {
             durable: true
         });
-        console.log(`Exchange '${EXCHANGE_NAME}' declarado.`);
+        console.log(`Exchange '${EXCHANGE_NAME}' garantido.`);
 
-        // 3. Declarar a Fila (Durável)
-        const q = await channel.assertQueue(QUEUE_NAME, {
-            durable: true // Garante que a fila sobreviva a reinicializações
-        });
-        console.log(`Fila '${q.queue}' declarada.`);
+        // NOTA: As declarações de Fila e Binding (3 e 4) são
+        // tecnicamente responsabilidade do CONSUMIDOR, mas tê-las aqui
+        // garante que o Producer NUNCA publique em um Exchange sem Fila.
+        // Se este arquivo for usado pelo Consumidor, continue assim.
 
-        // 4. Criar o Binding (Ligação)
-        // Diz ao Exchange para enviar mensagens com a ROUTING_KEY para a QUEUE_NAME
-        await channel.bindQueue(q.queue, EXCHANGE_NAME, ROUTING_KEY);
-        console.log(`Binding criado: ${EXCHANGE_NAME} -> ${q.queue} com chave '${ROUTING_KEY}'`);
-
-        // Opcional: Iniciar o consumo de mensagens aqui (serviço consumidor)
-        // channel.consume(q.queue, (msg) => { ... }, { noAck: false });
+        return { connection, channel, EXCHANGE_NAME, ROUTING_KEY };
 
     } catch (error) {
-        console.error("Erro ao configurar o RabbitMQ:", error);
+        console.error("Erro ao conectar ou configurar o RabbitMQ:", error);
+        // Em um projeto real, você implementaria reconexão aqui
+        throw error; 
     }
 }
 
-setupRabbitMQ();
+/**
+ * Publica um evento de 'list.checkout.completed' no Exchange.
+ * @param {object} messageData - Dados da mensagem a ser enviada.
+ */
+function publishListCheckout(messageData) {
+    if (!channel) {
+        console.error("[RabbitMQ] Não foi possível publicar: Canal não está ativo.");
+        // Você pode implementar uma fila interna para retries aqui.
+        return false;
+    }
+
+    const msg = Buffer.from(JSON.stringify(messageData));
+    
+    // O retorno 'true' não significa que a mensagem chegou ao Exchange, 
+    // mas sim que ela foi escrita no buffer do canal.
+    return channel.publish(
+        EXCHANGE_NAME,
+        ROUTING_KEY,
+        msg, {
+            persistent: true // Mensagem durável
+        }
+    );
+}
+
+// Exporta a função que estabelece a conexão e o canal
+module.exports = {
+    connectAndSetup,
+    publishListCheckout,
+    EXCHANGE_NAME,
+    ROUTING_KEY
+};
