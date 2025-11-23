@@ -1,0 +1,66 @@
+[
+  {
+    "id": "389a663a-227d-4035-bc9a-9216a617733c",
+    "email": "listdemo1758499878223@example.com",
+    "username": "list_user1758499878223",
+    "password": "$2a$12$7Kd.aToHxzS9udL.osMMveNa14y/Q1wwypBCDwUprDngZ1DACrihi",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:11:18.516Z",
+    "updatedAt": "2025-09-22T00:11:18.517Z"
+  },
+  {
+    "id": "8d77c4c0-9b48-4c5a-a00f-9d7136b8ac01",
+    "email": "listdemo1758499990516@example.com",
+    "username": "list_user1758499990516",
+    "password": "$2a$12$7xiuZJPKK6bqrKp7Bm/Wa.3TlpEq887lhl/N2mB9Tg2o.DB.0Eb6y",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:13:10.821Z",
+    "updatedAt": "2025-09-22T00:13:10.822Z"
+  },
+  {
+    "id": "07e33060-4b1d-4f46-aaca-6ef2b7054cda",
+    "email": "listdemo1758500015094@example.com",
+    "username": "list_user1758500015094",
+    "password": "$2a$12$7N0LwdREEk6FD5Wx47y.ZOuWsI3v0yEnxs8.hXShewvHWELEjIpTa",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:13:35.389Z",
+    "updatedAt": "2025-09-22T00:13:35.390Z"
+  },
+  {
+    "id": "a9e0628e-a2b5-49f2-a53e-61bdbea14af1",
+    "email": "listdemo1758500415097@example.com",
+    "username": "list_user1758500415097",
+    "password": "$2a$12$BRTJtets0g.EpcHeJTRXAu.OAzCVWeewCvdNEXVIDdQFl8weRgMoW",
+    "firstName": "Demo",
+    "lastName": "Listas",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Bombom",
+      "currency": "real"
+    },
+    "createdAt": "2025-09-22T00:20:15.535Z",
+    "updatedAt": "2025-09-22T00:20:15.541Z"
+  }
+]
