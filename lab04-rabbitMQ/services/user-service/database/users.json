@@ -62,5 +62,21 @@
     },
     "createdAt": "2025-09-22T00:20:15.535Z",
     "updatedAt": "2025-09-22T00:20:15.541Z"
+  },
+  {
+    "id": "e9632e14-5e46-4de0-9c90-546ef1d4dd41",
+    "email": "novo.usuario@exemplo.com",
+    "username": "novousuario",
+    "password": "$2a$12$ZPAEYU8V/paPRFc2aX3f0enbZJp/uepl4IrkRuNIodu.Tk6Ac7Sga",
+    "firstName": "Novo",
+    "lastName": "Cliente",
+    "role": "user",
+    "status": "active",
+    "preferences": {
+      "defaultStore": "Pão de Açúcar",
+      "currency": "Real"
+    },
+    "createdAt": "2025-11-23T23:54:53.677Z",
+    "updatedAt": "2025-11-23T23:54:53.681Z"
   }
 ]

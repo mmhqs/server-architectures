@@ -6,6 +6,7 @@ const path = require('path');
 const axios = require('axios');
 const JsonDatabase = require('../../shared/JsonDatabase');
 const serviceRegistry = require('../../shared/serviceRegistry');
+const { connectRabbitMQ, publishListCheckout } = require('../../config/rabbitmq-connection');
 let uuidv4;
 import('uuid').then(uuid => {
     uuidv4 = uuid.v4;
@@ -52,9 +53,7 @@ class ListService {
         try {
             this.rabbitChannel = await connectRabbitMQ();
         } catch (error) {
-            console.error("Setup RabbitMQ falhou na inicialização. Publicação não estará ativa.");
-            // O serviço pode continuar rodando (graceful degradation) ou pode ser parado
-            // dependendo da criticidade da fila.
+            console.error(`Setup RabbitMQ falhou na inicialização. Publicação não estará ativa. O erro foi ${error}`);
         }
     }
 
@@ -523,8 +522,7 @@ class ListService {
             });
 
         } catch (error) {
-            console.error('Erro no checkout da lista:', error);
-            res.status(500).json({ success: false, message: 'Erro interno do servidor ao processar checkout' });
+            res.status(500).json({ success: false, message: `Erro interno do servidor ao processar checkout - ${error}` });
         }
     }
 }

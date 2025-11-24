@@ -4,7 +4,7 @@ const amqp = require('amqplib');
 const EXCHANGE_NAME = 'shopping_events';
 const QUEUE_NAME = 'log_notification_queue'; // Nome da fila do Consumer A
 const BINDING_KEY = 'list.checkout.#';       // Chave de ligação com curinga
-const AMQP_URL = 'amqp://localhost';         // Endereço do broker
+const AMQP_URL = 'amqp://localhost:5673';      // Endereço do broker (configurei no docker run)
 
 async function startConsumerA() {
     let connection;

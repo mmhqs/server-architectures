@@ -10,10 +10,10 @@
       "/users",
       "/search"
     ],
-    "registeredAt": 1758500360661,
-    "lastHealthCheck": 1758500591003,
+    "registeredAt": 1763941856467,
+    "lastHealthCheck": 1763943776893,
     "healthy": true,
-    "pid": 9772
+    "pid": 1612
   },
   "list-service": {
     "url": "http://127.0.0.1:3002",
@@ -27,10 +27,10 @@
       "/lists/:id/items/:itemId",
       "/lists/:id/summary"
     ],
-    "registeredAt": 1758500372842,
-    "lastHealthCheck": 1758500591011,
+    "registeredAt": 1763943751385,
+    "lastHealthCheck": 1763943781397,
     "healthy": true,
-    "pid": 17628
+    "pid": 1552
   },
   "item-service": {
     "url": "http://127.0.0.1:3003",

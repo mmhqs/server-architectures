@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "85584fcf-4be8-4be9-b0a2-2710205e3aed",
+    "userId": "e9632e14-5e46-4de0-9c90-546ef1d4dd41",
+    "name": "Lista de Teste RabbitMQ",
+    "description": "Itens para checkout",
+    "status": "active",
+    "items": [],
+    "summary": {
+      "totalItems": 0,
+      "purchasedItems": 0,
+      "estimatedTotal": 0
+    },
+    "createdAt": "2025-11-23T23:56:34.893Z",
+    "updatedAt": "2025-11-23T23:56:34.895Z"
+  }
+]
