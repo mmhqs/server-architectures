@@ -11,7 +11,7 @@
       "/search"
     ],
     "registeredAt": 1763941856467,
-    "lastHealthCheck": 1763943776893,
+    "lastHealthCheck": 1763945427352,
     "healthy": true,
     "pid": 1612
   },
@@ -28,7 +28,7 @@
       "/lists/:id/summary"
     ],
     "registeredAt": 1763943751385,
-    "lastHealthCheck": 1763943781397,
+    "lastHealthCheck": 1763945431863,
     "healthy": true,
     "pid": 1552
   },
